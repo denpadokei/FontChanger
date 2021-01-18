@@ -1,4 +1,5 @@
-﻿using IPA;
+﻿using BS_Utils.Utilities;
+using IPA;
 using IPA.Config;
 using IPA.Config.Stores;
 using System;
@@ -50,29 +51,29 @@ namespace FontChanger
         public void OnApplicationStart()
         {
             Log.Debug("OnApplicationStart");
-            if (!Directory.Exists(FontPath)) {
-                Directory.CreateDirectory(FontPath);
-            }
+            BSEvents.lateMenuSceneLoadedFresh += this.BSEvents_lateMenuSceneLoadedFresh;
+        }
 
-            foreach (var fontPath in Directory.EnumerateFiles(FontPath, "*.ttf", SearchOption.TopDirectoryOnly)) {
+        private void BSEvents_lateMenuSceneLoadedFresh(ScenesTransitionSetupDataSO obj)
+        {
+            foreach (var fontPath in Font.GetPathsToOSFonts()) {
                 var font = new Font(fontPath);
-                var asset = TMP_FontAsset.CreateFontAsset(font, 90, 5, UnityEngine.TextCore.LowLevel.GlyphRenderMode.SDFAA, 8192, 8192);
-                foreach (var text in Resources.FindObjectsOfTypeAll<TextMeshPro>()) {
-                    text.font = asset;
+                if (font.name.ToLower() != "meiryob") {
+                    continue;
                 }
-                foreach (var text in Resources.FindObjectsOfTypeAll<TextMeshProUGUI>()) {
-                    text.font = asset;
+                var asset = TMP_FontAsset.CreateFontAsset(font, 90, 5, UnityEngine.TextCore.LowLevel.GlyphRenderMode.SDFAA, 8192, 4096);
+                foreach (var fontAsset in Resources.FindObjectsOfTypeAll<TMP_FontAsset>()) {
+                    fontAsset.fallbackFontAssetTable = new List<TMP_FontAsset>();
+                    fontAsset.fallbackFontAssetTable.Add(asset);
                 }
             }
-            //new GameObject("FontChangerController").AddComponent<FontChangerController>();
-
         }
 
         [OnExit]
         public void OnApplicationQuit()
         {
             Log.Debug("OnApplicationQuit");
-
+            BSEvents.lateMenuSceneLoadedFresh -= this.BSEvents_lateMenuSceneLoadedFresh;
         }
     }
 }
